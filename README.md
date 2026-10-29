@@ -1,6 +1,6 @@
 # Class Election
 
-A Flutter app where each student votes once for a candidate. My data is now saved on the phone with shared_preferences, so nothing is lost when the app closes, and it shows today's weather in Kigali from the Open-Meteo API.
+A Flutter app where each student votes once for a candidate. Accounts use Firebase Email/Password authentication, and every account's candidates and voters are stored privately in Cloud Firestore under `users/{uid}/...`. The app also shows today's weather in Kigali from the Open-Meteo API.
 
 ## Screenshots
 ![Before closing](screenshots/before.png)
