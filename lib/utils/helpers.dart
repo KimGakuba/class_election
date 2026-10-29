@@ -1,6 +1,5 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/election.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // Name cleaning helpers for Class Election
 // Rules:
@@ -28,26 +27,38 @@ String cleanName(String input) {
   return titled.join(' ');
 }
 
-// saveElection: save election data as json string with key 'election'
-Future<void> saveElection(Election e) async {
-  final prefs = await SharedPreferences.getInstance();
-  final jsonStr = jsonEncode(e.toJson());
-  await prefs.setString('election', jsonStr);
+// myCandidates: the signed-in user's candidates collection
+CollectionReference<Map<String, dynamic>> myCandidates() {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .collection('candidates');
 }
 
-// loadElection: load election data; return null if nothing saved
-Future<Election?> loadElection() async {
-  final prefs = await SharedPreferences.getInstance();
-  final jsonStr = prefs.getString('election');
-  if (jsonStr == null) return null;
-  final decoded = jsonDecode(jsonStr);
-  if (decoded is Map<String, dynamic>) {
-    return Election.fromJson(decoded);
+// myVoters: the signed-in user's voters collection
+CollectionReference<Map<String, dynamic>> myVoters() {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .collection('voters');
+}
+
+// friendlyFirestoreError: readable message for common Firestore failures
+String friendlyFirestoreError(Object error) {
+  if (error is FirebaseException) {
+    if (error.code == 'permission-denied') {
+      return 'You do not have permission to do that.';
+    }
+    if (error.code == 'unavailable') {
+      return 'Cannot reach the database. Check your internet connection.';
+    }
+    if (error.code == 'not-found') {
+      return 'That item no longer exists.';
+    }
   }
-  if (decoded is Map) {
-    return Election.fromJson(Map<String, dynamic>.from(decoded));
-  }
-  return null;
+  return 'Something went wrong. Please try again.';
 }
 
 // Check if voter already exists (case/space insensitive after cleaning logic)
